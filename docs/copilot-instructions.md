@@ -1,0 +1,4 @@
+- Reference MedZen Multitenant Telehealth Platform - System Design Document.md for all design decisions
+- Add swagger documentation for all endpoints, including request/response examples and error handling
+- Ensure all DTOs are properly validated and documented
+- Implement comprehensive error handling and logging
