@@ -1,0 +1,49 @@
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Copy package files
+COPY package*.json ./
+COPY yarn.lock ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile --production && \
+    yarn cache clean
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN yarn build
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nestjs -u 1001
+
+# Create necessary directories and set ownership
+RUN mkdir -p /app/uploads /app/logs && \
+    chown -R nestjs:nodejs /app && \
+    chmod -R 755 /app
+
+# Switch to non-root user
+USER nestjs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:3002/health || exit 1
+
+# Expose port
+EXPOSE 3002
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application
+CMD ["yarn", "start:prod"]
